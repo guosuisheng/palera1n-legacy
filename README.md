@@ -79,6 +79,13 @@ You can now jailbreak with palera1n too with the Tips app, enjoy!
 >
 > And you should be booted back in with a clean JB
 
+
+# This script only works for IOS Version 15.8.4 and Iphone 6s.
+# IV and KEY pick up (https://theapplewiki.com/wiki/Keys:SkyUpdate_19H390_(iPhone8,1))
+
+> ``~/jail/palera1n-legacy$ sudo ./palera1n.sh --bypass 15.8.4``
+> `` ~/jail/palera1n-legacy$ sudo ./palera1n.sh --tweaks 15.8.4 ``
+
 # Credits
 <details><summary>palera1n Contributors</summary>
 <p>
