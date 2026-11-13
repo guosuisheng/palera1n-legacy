@@ -1036,6 +1036,32 @@ fi
 # Boot create
 # ============
 
+# ---- Manual firmware keys: iPhone8,1, iOS 15.8.4, build 19H390 ----
+if [[ "$model" == n71m* ]]; then
+    # N71mAP
+    IBSS_IV="2c1cb5690d315b71b456f4cc0a1fb048"
+    IBSS_KEY="891353c4057734d40ace6602bdfc3d7c0c6a94edeca64b864d21f6eb1c77c225"
+    IBOOT_IV="24c405dd71e8af16b36fb73c121160e7"
+    IBOOT_KEY="87658ab3502cb6e796b6ab588aed5e8edb0bdaf24ba2ef54e59c280bb7657e30"
+else
+    # N71AP
+    IBSS_IV="3a5222bdcf915acdad4945ba7afa726c"
+    IBSS_KEY="463332b31748f58da58051e5ead61986b56236aee0bfc6132ee059659e843b74"
+    IBOOT_IV="ba46f3052cb50431cc4924a01a2d7038"
+    IBOOT_KEY="947d2b109aea57979d56f6dacd561ff985e9d0980450bce46b8280181e8b238a"
+fi
+
+check_key() {
+    if [[ ! "$1" =~ ^[0-9a-fA-F]{32}$ ]] || [[ ! "$2" =~ ^[0-9a-fA-F]{64}$ ]]; then
+        echo "[-] Invalid IV/key for $3"
+        exit 1
+    fi
+}
+check_key "$IBSS_IV"  "$IBSS_KEY"  "iBSS"
+check_key "$IBOOT_IV" "$IBOOT_KEY" "iBoot"
+
+
+
 # Actually create the boot files
 disk=$(cat .fs-"$deviceid")
 if [[ "$version" == *"16"* ]]; then
@@ -1115,13 +1141,16 @@ if [ ! -f boot-"$deviceid"/ibot.img4 ]; then
         echo "[*] Downloading and decrypting iBSS"
         "$bin"/pzb -g "$(awk "/""$model""/{x=1}x&&/iBSS[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1)" "$ipswurl"
         #"$bin"/gaster decrypt "$(awk "/""$model""/{x=1}x&&/iBSS[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]dfu[/]//')" iBSS.dec
-        ivkey=$("$dir"/java/bin/java -jar "$bin"/FirmwareKeysDl-1.0-SNAPSHOT.jar -ivkey "$(awk "/""$model""/{x=1}x&&/iBSS[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]dfu[/]//')" $version $deviceid)
+        #ivkey=$("$dir"/java/bin/java -jar "$bin"/FirmwareKeysDl-1.0-SNAPSHOT.jar -ivkey "$(awk "/""$model""/{x=1}x&&/iBSS[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]dfu[/]//')" $version $deviceid)
+        ivkey="${IBSS_IV}${IBSS_KEY}"
         "$bin"/img4 -i "$(awk "/""$model""/{x=1}x&&/iBSS[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]dfu[/]//')" -o iBSS.dec -k $ivkey
         
         echo "[*] Downloading and decrypting iBoot"
         "$bin"/pzb -g "$(awk "/""$model""/{x=1}x&&/iBoot[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1)" "$ipswurl"
         #"$bin"/gaster decrypt "$(awk "/""$model""/{x=1}x&&/iBoot[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]all_flash[/]//')" ibot.dec
-        ivkey=$("$dir"/java/bin/java -jar "$bin"/FirmwareKeysDl-1.0-SNAPSHOT.jar -ivkey "$(awk "/""$model""/{x=1}x&&/iBoot[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]all_flash[/]//')" $version $deviceid)
+        #ivkey=$("$dir"/java/bin/java -jar "$bin"/FirmwareKeysDl-1.0-SNAPSHOT.jar -ivkey "$(awk "/""$model""/{x=1}x&&/iBoot[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]all_flash[/]//')" $version $deviceid)
+        ivkey="${IBOOT_IV}${IBOOT_KEY}"
+
         "$bin"/img4 -i "$(awk "/""$model""/{x=1}x&&/iBoot[.]/{print;exit}" BuildManifest.plist | grep '<string>' | cut -d\> -f2 | cut -d\< -f1 | sed 's/Firmware[/]all_flash[/]//')" -o ibot.dec -k $ivkey
 
         echo "[*] Patching and signing iBSS/iBoot"
